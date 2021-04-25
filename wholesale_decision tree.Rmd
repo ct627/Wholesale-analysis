@@ -1,0 +1,60 @@
+---
+title: "Wholesale decision tree"
+author: "Tsai,Chiao-Ting"
+date: "4/21/2021"
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+pacman::p_load(dplyr,tidyr,tidyverse,rpart,rpart.plot)
+df <- read_csv("/Users/chiaotingtsai/Desktop/Wholesale customers data.csv")
+```
+
+# decision tree
+```{r}
+df_tree <- df %>% select(-Region)
+df_tree$Channel <- as.factor(df_tree$Channel)
+```
+
+```{r}
+indx <- sample(1:nrow(df_tree), as.integer(0.7*nrow(df_tree)))
+df_tree_train <- df_tree[indx,]
+df_tree_test <- df_tree[-indx,]
+```
+
+```{r}
+m.rpart <- rpart(Channel ~ ., data = df_tree_train)
+# get more detailed information about the tree
+summary(m.rpart)
+```
+
+```{r}
+#get basic information about the tree
+m.rpart
+
+# a basic decision tree diagram
+rpart.plot(m.rpart, digits = 3)
+
+# a few adjustments to the diagram
+rpart.plot(m.rpart, digits = 4, fallen.leaves = TRUE, type = 3, extra = 2)
+```
+
+```{r}
+p.rpart <- predict(m.rpart, df_tree_train)
+summary(df_tree_train$Channel)
+pred <- predict(m.rpart, newdata=df_tree_train, type="class")
+table(real=df_tree_train$Channel, predict=pred)
+confus.matrix <- table(real=df_tree_train$Channel, predict=pred)
+sum(diag(confus.matrix))/sum(confus.matrix)
+
+p.rpart <- predict(m.rpart, df_tree_test)
+summary(df_tree_test$Channel)
+pred <- predict(m.rpart, newdata=df_tree_test, type="class")
+table(real=df_tree_test$Channel, predict=pred)
+confus.matrix <- table(real=df_tree_test$Channel, predict=pred)
+sum(diag(confus.matrix))/sum(confus.matrix)
+```
